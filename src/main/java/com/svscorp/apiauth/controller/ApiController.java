@@ -32,6 +32,7 @@ public class ApiController {
     public ResponseEntity<String> getPublic() {
         return new ResponseEntity<>(apiService.getPublicString(), HttpStatus.OK);
     }
+    @PreAuthorize("hasAuthority('Reads')")
     @GetMapping(value = "/protected",produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> getProtected() {
         return new ResponseEntity<>(apiService.getProtectedString(), HttpStatus.OK);

@@ -21,14 +21,17 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
-    @Value("${auth0.audience}")
-    private String audience;
+    @Value("${auth0.azp}")
+    private String azp;
 
     @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
     private String issuer;
     private static final String[] WHITELIST = {
-            "actuator/health"
+            "/actuator/health","/v3/api-docs/**",
+            "/swagger-ui/**"
     };
+
+
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -48,27 +51,28 @@ public class SecurityConfig {
         return http.build();
 
     }
-    @Bean
-    public WebSecurityCustomizer webSecurityCustomizer() {
-        return (web) -> web.ignoring().antMatchers(            "/v3/api-docs/**",
-                "/swagger-ui/**");
-    }
+//    @Bean
+//    public WebSecurityCustomizer webSecurityCustomizer() {
+//        return (web) -> web.ignoring().antMatchers(            "/v3/api-docs/**",
+//                "/swagger-ui/**");
+//    }
     JwtDecoder jwtDecoder() {
-        OAuth2TokenValidator<Jwt> withAudience = new AudienceValidator(audience);
+        OAuth2TokenValidator<Jwt> withazp = new AzpValidator(azp);
         OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(issuer);
-        OAuth2TokenValidator<Jwt> validator = new DelegatingOAuth2TokenValidator<>(withAudience, withIssuer);
+        OAuth2TokenValidator<Jwt> validator = new DelegatingOAuth2TokenValidator<>( withazp,withIssuer);
 
         NimbusJwtDecoder jwtDecoder = (NimbusJwtDecoder) JwtDecoders.fromOidcIssuerLocation(issuer);
         jwtDecoder.setJwtValidator(validator);
         return jwtDecoder;
     }
     JwtAuthenticationConverter jwtAuthenticationConverter() {
-        JwtGrantedAuthoritiesConverter converter = new JwtGrantedAuthoritiesConverter();
-        converter.setAuthoritiesClaimName("permissions");
-        converter.setAuthorityPrefix("");
+
+//        JwtGrantedAuthoritiesConverter converter = new JwtGrantedAuthoritiesConverter();
+//        converter.setAuthoritiesClaimName("permissions");
+//        converter.setAuthorityPrefix("");
 
         JwtAuthenticationConverter jwtConverter = new JwtAuthenticationConverter();
-        jwtConverter.setJwtGrantedAuthoritiesConverter(converter);
+        jwtConverter.setJwtGrantedAuthoritiesConverter(new CustomJwtGrantedAuthoritiesConverter());
         return jwtConverter;
     }
 }
